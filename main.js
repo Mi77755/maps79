@@ -1,31 +1,25 @@
 window.onload = () => {
-  const popup = document.getElementById("popup");
-  const popupTitle = document.getElementById("popup-title");
-  const popupDesc = document.getElementById("popup-desc");
-  const popupClose = document.getElementById("popup-close");
-  const projectList = document.getElementById("project-list");
-  const form = document.getElementById("project-form");
+  const mapContainer = document.getElementById('map');
+  const projectList = document.getElementById('project-list');
 
+  const rightPanel = document.getElementById('right-panel');
+  const rightTitle = document.getElementById('right-title');
+  const rightDesc = document.getElementById('right-desc');
+  const editForm = document.getElementById('edit-form');
+  const editName = document.getElementById('edit-name');
+  const editDesc = document.getElementById('edit-desc');
+  const editCity = document.getElementById('edit-city');
+  const saveBtn = document.getElementById('save-project');
+  const editBtn = document.getElementById('edit-btn');
+
+  const form = document.getElementById('project-form');
+
+  let projects = [];
   let editKey = null;
-  const projects = [];
-
-// Закрытие при клике вне содержимого
-popup.onclick = e => {
-  if (e.target === popup) popup.classList.add("hidden");
-};
-
-// Функция открытия поп-апа для конкретного проекта
-function showPopup(project) {
-  popupTitle.textContent = project.name;
-  popupDesc.innerHTML = project.description.replace(/\n/g, "<br>");
-  popup.style.display = block;
-  popup.classList.remove('hidden');
-  popup.classList.add('hidden');
-}
 
   // Инициализация карты
   const map = new maplibregl.Map({
-    container: 'map',
+    container: mapContainer,
     style: {
       version: 8,
       sources: {
@@ -49,85 +43,126 @@ function showPopup(project) {
     },
     center: [12.5, 42.5],
     zoom: 5,
-    scrollZoom: false
+    scrollZoom: false,
+    dragPan: true // можно отключить, если нужно
   });
 
-map.on('load', () => {
-projects.forEach(p => addProjectToMap(p));
-});
+  // Добавление маркера на карту
+  function addProjectToMap(project) {
+    if (project.marker) return;
 
-// Добавление маркера на карту
-function addProjectToMap(project) {
-  // Если маркер уже создан, не создаём новый
-  if(project.marker) return;
+    const el = document.createElement('div');
+    el.className = 'project-marker';
+    el.style.width = '15px';
+    el.style.height = '15px';
+    el.style.backgroundImage = 'url("img/circle.png")';
+    el.style.backgroundSize = 'contain';
+    el.style.backgroundRepeat = 'no-repeat';
+    el.style.backgroundPosition = 'center';
+    el.style.cursor = 'pointer';
 
-  const el = document.createElement('div');
-  el.className = 'project-marker';
-  el.style.width = '50px';
-  el.style.height = '50px';
-  el.style.cursor = 'pointer';
-  el.style.backgroundImage = 'url("img/circle.png")';
-  el.style.backgroundSize = 'contain';   // сохраняем форму
-  el.style.backgroundRepeat = 'no-repeat';
-  el.style.backgroundPosition = 'center';
-  el.style.borderRadius = '0';
-  el.style.overFlow = 'visible';
-  el.style.pointerEvents = 'auto';
-  el.style.zIndex = 1000;
+    // Поп-ап с названием проекта
+    const popup = new maplibregl.Popup({ offset: 25, closeButton: false, closeOnClick: true })
+      .setText(project.name);
 
-const popup = new maplibregl.Popup({ offset: 25, closeButton: true, closeOnClick: true })
-    .setHTML(`<h2>${project.name}</h2><p>${project.description.replace(/\n/g, '<br>')}</p>`);
+    const marker = new maplibregl.Marker(el)
+      .setLngLat([project.lng, project.lat])
+      .setPopup(popup)
+      .addTo(map);
 
-  const marker = new maplibregl.Marker(el)
-    .setLngLat([project.lng, project.lat])
-    .setPopup(popup) // вот это вместо кастомного click
-    .addTo(map);
+    // Клик открывает правую панель
+    el.addEventListener('click', (e) => {
+      e.stopPropagation(); // чтобы карта не перехватывала
+      openDetails(project);
+    });
 
-  project.marker = marker;
-}
+    project.marker = marker;
+  }
 
-// Закрытие popup
-popupClose.onclick = () => popup.classList.add('hidden');
-popup.onclick = e => {
-  if(e.target === popup) popup.classList.add('hidden');
-};
-  // Обновление списка проектов в sidebar
+  // Открытие правой панели с информацией
+  function openDetails(project) {
+    rightPanel.classList.add('active');
+    rightTitle.textContent = project.name;
+    rightDesc.textContent = project.description;
+    editForm.style.display = 'none';
+    editBtn.style.display = 'block';
+    editKey = project.key;
+  }
+
+  // Кнопка редактирования открывает форму вместо описания
+  editBtn.onclick = () => {
+    editForm.style.display = 'block';
+    editBtn.style.display = 'none';
+    editName.value = rightTitle.textContent;
+    editDesc.value = rightDesc.textContent;
+  };
+
+  // Сохранение редактирования
+  saveBtn.onclick = () => {
+    const updated = {
+      name: editName.value.trim(),
+      description: editDesc.value.trim(),
+      lat: null,
+      lng: null
+    };
+
+    const project = projects.find(p => p.key === editKey);
+    if (!project) return;
+
+    updated.lat = project.lat;
+    updated.lng = project.lng;
+
+    projectsRef.child(editKey).set(updated);
+    editForm.style.display = 'none';
+    editBtn.style.display = 'block';
+
+    rightTitle.textContent = updated.name;
+    rightDesc.textContent = updated.description;
+
+    // обновляем маркер popup
+    if (project.marker) project.marker.getPopup().setText(updated.name);
+  };
+
+  // Обновление списка проектов в левой панели
   function updateProjectList() {
     projectList.innerHTML = '';
     projects.forEach(p => {
       const li = document.createElement('li');
-      li.textContent = p.name;
+      li.style.display = 'flex';
+      li.style.justifyContent = 'space-between';
+      li.style.alignItems = 'center';
+      li.style.overflow = 'hidden';
 
-      // кнопка удаления
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = p.name;
+      nameSpan.style.whiteSpace = 'nowrap';
+      nameSpan.style.overflow = 'hidden';
+      nameSpan.style.textOverflow = 'ellipsis';
+      nameSpan.style.flex = '1';
+      nameSpan.style.marginRight = '5px';
+
       const delBtn = document.createElement('button');
       delBtn.textContent = '❌';
-      delBtn.style.marginLeft = '10px';
       delBtn.onclick = () => {
         if(p.marker) p.marker.remove();
         projectsRef.child(p.key).remove();
       };
 
-      // кнопка редактирования
-      const editBtn = document.createElement('button');
-      editBtn.textContent = '✏️';
-      editBtn.style.marginLeft = '5px';
-      editBtn.onclick = () => {
-        document.getElementById('proj-name').value = p.name;
-        document.getElementById('proj-desc').value = p.description;
-        document.getElementById('proj-city').value = '';
-        editKey = p.key;
-      };
+      const editLiBtn = document.createElement('button');
+      editLiBtn.textContent = '✏️';
+      editLiBtn.onclick = () => openDetails(p);
 
+      li.appendChild(nameSpan);
       li.appendChild(delBtn);
-      li.appendChild(editBtn);
+      li.appendChild(editLiBtn);
       projectList.appendChild(li);
     });
   }
 
- // Подгрузка проектов из Firebase
+  // Подгрузка проектов из Firebase
   projectsRef.on('value', snapshot => {
     const data = snapshot.val() || {};
-    projects.length = 0; // очищаем массив
+    projects.length = 0;
     Object.keys(data).forEach(key => {
       const p = data[key];
       p.key = key;
@@ -137,20 +172,19 @@ popup.onclick = e => {
     updateProjectList();
   });
 
-  // Обработка формы добавления/редактирования
+  // Добавление нового проекта
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const name = document.getElementById('proj-name').value.trim();
     const desc = document.getElementById('proj-desc').value.trim();
     const city = document.getElementById('proj-city').value.trim();
 
-    let coords = { lat: 42.5, lng: 12.5 }; // дефолтные координаты
-    if(city) {
+    let coords = { lat: 42.5, lng: 12.5 };
+    if (city) {
       try {
-        // ✅ fetch исправлен с обратными кавычками
         const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)}&countrycodes=IT`);
         const data = await res.json();
-        if(data.length === 0) { alert("Città non trovata"); return; }
+        if (data.length === 0) { alert("Città non trovata"); return; }
         coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
       } catch(err) {
         alert("Errore nella ricerca della città"); 
@@ -158,17 +192,13 @@ popup.onclick = e => {
       }
     }
 
-    const projectData = { name, description: desc, lat: coords.lat, lng: coords.lng };
-
-    if(editKey) {
-      projectsRef.child(editKey).set(projectData);
-      editKey = null;
-    } else {
-      const newRef = projectsRef.push();
-      projectData.key = newRef.key;
-      newRef.set(projectData);
-    }
+    const newProjRef = projectsRef.push();
+    const project = { name, description: desc, lat: coords.lat, lng: coords.lng, key: newProjRef.key };
+    newProjRef.set(project);
+    projects.push(project);
+    addProjectToMap(project);
+    updateProjectList();
 
     form.reset();
   });
-}; // <- закрываем window.onload
+};
