@@ -19,9 +19,7 @@
 <body>
 
 <div class="container">
-  <div id="map"></div>
-
-  <div class="sidebar">
+  <div class="sidebar left" id="left-panel">
     <h2>Progetti</h2>
     <ul id="project-list"></ul>
 
@@ -33,15 +31,32 @@
       <button type="submit">Aggiungi</button>
     </form>
   </div>
+
+   <div class="map-and-panel" style="display:flex; flex:1; position:relative;">
+    <div id="map" style="flex:1;"></div>
+
+  <div class="sidebar right" id="right-panel">
+  <h2 id="right-title">Project</h2>
+  <p id="right-desc"></p>
+
+  <!-- Форма редактирования скрыта изначально -->
+  <div id="edit-form" style="display:none;">
+    <input id="edit-name" placeholder="Nome del progetto" />
+    <textarea id="edit-desc" placeholder="Descrizione"></textarea>
+    <input id="edit-city" placeholder="Localita'" />
+    <button id="save-project">Salvare</button>
+  </div>
+
+  <button id="edit-btn">Modifica</button> <!-- открывает форму -->
 </div>
 
 <div id="popup" class="hidden">
  <div id="popup-content">
   <span id="popup-close">&times;</span>
   <h2 id="popup-title"></h2>
-  <p id="popup-desc"></p>
  </div>
 </div>
+
 
 <!-- MapLibre GL -->
 <script src="https://unpkg.com/maplibre-gl@2.4.0/dist/maplibre-gl.js"></script>
