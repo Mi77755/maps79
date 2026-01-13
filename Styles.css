@@ -1,15 +1,12 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #111;
 }
 
 #app {
   width: 1440px;
   height: 900px;
   display: flex;
-  overflow: hidden;
-  background: #fff;
 }
 
 .project-item {
@@ -112,5 +109,6 @@ html, body {
   border-radius: 0 !important;
   z-index: 1000;
 }
+
 
 
