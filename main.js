@@ -47,6 +47,19 @@ window.onload = () => {
     dragPan: true // можно отключить, если нужно
   });
 
+  function scaleApp() {
+  const app = document.getElementById('app');
+  const scale = Math.min(
+    window.innerWidth / 1440,
+    window.innerHeight / 900
+  );
+  app.style.transform = `scale(${scale})`;
+  app.style.transformOrigin = 'top left';
+  setTimeout(() => map.resize(), 0);
+}
+window.addEventListener('resize', scaleApp);
+window.addEventListener('load', scaleApp);
+  
   // Добавление маркера на карту
   function addProjectToMap(project) {
     if (project.marker) return;
@@ -202,3 +215,4 @@ window.onload = () => {
     form.reset();
   });
 };
+
