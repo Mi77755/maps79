@@ -157,6 +157,11 @@ html, body {
   display: flex;
 }
 
+#map {
+  min-width: 600px;
+  flex-shrink: 0;
+}
+
 .map-and-panel {
   flex: 0;
   min-width: 600px;
@@ -178,3 +183,4 @@ html, body {
   width: 1440px;
   height: 900px;
 }
+
