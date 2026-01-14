@@ -75,7 +75,7 @@ html, body {
 
 /* Правая панель */
 #right-panel {
-  width: 300px;
+  width: flex;
   padding: 10px;
   background: white;
   border-left: 1px solid #ccc;
@@ -88,7 +88,7 @@ html, body {
 
 /* левая панель */
 #left-panel {
-  width: 200px;
+  width: flex;
   padding: 15px;
   background: white;
   border-right: 1px solid #ccc;
@@ -183,4 +183,5 @@ html, body {
   width: 1440px;
   height: 900px;
 }
+
 
